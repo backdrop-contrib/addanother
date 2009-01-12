@@ -1,8 +1,12 @@
 <?php
 // $Id$
-
 /**
- * Implementation of hook_help()
+ * @file
+ * Presents users with an option to create another node of the same type after a
+ * node is added.
+ */
+/**
+ * Implementation of hook_help().
  */
 function addanother_help($path, $arg) {
   $output = '';
@@ -13,20 +17,17 @@ function addanother_help($path, $arg) {
   }
   return $output;
 }
-
 /**
- * Implementation of hook_perm()
+ * Implementation of hook_perm().
  */
 function addanother_perm() {
   return array('enable add another');
 }
-
 /**
- * Implementation of addanother_menu()
+ * Implementation of addanother_menu().
  */
 function addanother_menu() {
   $items = array();
-
   $items['admin/settings/addanother'] = array(
     'title' => 'Add Another',
     'description' => 'Modify which node types display the Add Another message.',
@@ -34,48 +35,45 @@ function addanother_menu() {
     'page arguments' => array('addanother_admin'),
     'access arguments' => array('access administration pages'),
     'type' => MENU_NORMAL_ITEM,
-   );
-
+  );
   return $items;
 }
-
 /**
- * This function sets up the admin/settings/addanother settings page
+ * This function sets up the admin/settings/addanother settings page.
  */
 function addanother_admin() {
   $form = array();
-
   $types = node_get_types();
   foreach ($types as $type) {
   $typename = $type->name;
   $typeid = $type->type;
     $form[$typeid] = array(
       '#type' => 'fieldset',
-      '#collapsible' => true,
-      '#collapsed' => true,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
       '#title' => t('Add Another for !typename.', array('!typename' => $typename)),
     );
-
     $form[$typeid]['addanother_'. $typeid] = array(
       '#type' => 'checkbox',
       '#title' => t('Use Add Another with this node type'),
-      '#return_value' => 1, 
+      '#return_value' => 1,
       '#default_value' => variable_get('addanother_'. $typeid, 0),
       '#description' => t('If enabled, a message will be displayed when a node of this type is created by a user with the "enable addanother" permission allow the user to add another node of the same type.'),
     );
   }
-
   return system_settings_form($form);
 }
-
 /**
- * Implementation of hook_nodeapi
- */ 
+ * Implementation of hook_nodeapi().
+ */
 function addanother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'insert':
       if (user_access('enable add another') && variable_get('addanother_'. $node->type, 0)) {
-        drupal_set_message(t('Add another <a href="@typeurl">%type</a>.', array('@typeurl' => url('node/add/'. $node->type), '%type' => $node->type)));
+        drupal_set_message(t('Add another <a href="@typeurl">%type</a>.', array(
+          '@typeurl' => url('node/add/'. str_replace('_', '-', $node->type)),
+          '%type' => node_get_types('name', $node)
+          )));
       }
       break;
   }
