@@ -13,9 +13,13 @@ function addanother_help($path, $arg) {
   switch ($path) {
     case "admin/help#addanother":
       $output = '<p>'.  t("Presents users with an option to create another node of the same type after a node is added.") .'</p>';
-      break;
+      return $output;
+    case 'admin/settings/addanother':
+      $output = 'Here you can select the content types for which an <em>"Add another..."</em> message will be displayed. After creating a new content node, users with the <a href="@addanother_perm">enable add another</a> permission will receive a message allowing them to add another content node of the same type.';
+      return '<p>'. t($output, array(
+        '@addanother_perm' => url('admin/user/permissions', array('fragment' => 'module-addanother')),
+      )) .'</p>';
   }
-  return $output;
 }
 /**
  * Implementation of hook_perm().
@@ -24,7 +28,7 @@ function addanother_perm() {
   return array('enable add another');
 }
 /**
- * Implementation of addanother_menu().
+ * Implementation of hook_menu().
  */
 function addanother_menu() {
   $items = array();
@@ -42,25 +46,13 @@ function addanother_menu() {
  * This function sets up the admin/settings/addanother settings page.
  */
 function addanother_admin() {
-  $form = array();
-  $types = node_get_types();
-  foreach ($types as $type) {
-  $typename = $type->name;
-  $typeid = $type->type;
-    $form[$typeid] = array(
-      '#type' => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#title' => t('Add Another for !typename.', array('!typename' => $typename)),
-    );
-    $form[$typeid]['addanother_'. $typeid] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Use Add Another with this node type'),
-      '#return_value' => 1,
-      '#default_value' => variable_get('addanother_'. $typeid, 0),
-      '#description' => t('If enabled, a message will be displayed when a node of this type is created by a user with the "enable addanother" permission allow the user to add another node of the same type.'),
-    );
-  }
+  $form['addanother_nodetypes'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Enable Add Another for these content types'),
+    '#options' => node_get_types('names'),
+    '#default_value' => variable_get('addanother_nodetypes', array()),
+    '#description' => 'An <em>Add Another</em> message will be shown after creating these content types',
+  );
   return system_settings_form($form);
 }
 /**
@@ -69,7 +61,8 @@ function addanother_admin() {
 function addanother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'insert':
-      if (user_access('enable add another') && variable_get('addanother_'. $node->type, 0)) {
+      $allowed_nodetypes = variable_get('addanother_nodetypes', array());
+      if (user_access('enable add another') && $allowed_nodetypes[$node->type]) {
         drupal_set_message(t('Add another <a href="@typeurl">%type</a>.', array(
           '@typeurl' => url('node/add/'. str_replace('_', '-', $node->type)),
           '%type' => node_get_types('name', $node)
