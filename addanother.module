@@ -62,12 +62,31 @@ function addanother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'insert':
       $allowed_nodetypes = variable_get('addanother_nodetypes', array());
-      if (user_access('enable add another') && $allowed_nodetypes[$node->type]) {
-        drupal_set_message(t('Add another <a href="@typeurl">%type</a>.', array(
+      if (user_access('enable add another') && isset($allowed_nodetypes[$node->type]) && $allowed_nodetypes[$node->type]) {
+        global $_addanother_message;
+        $_addanother_message = t('Add another <a href="@typeurl">%type</a>.', array(
           '@typeurl' => url('node/add/'. str_replace('_', '-', $node->type)),
           '%type' => node_get_types('name', $node)
-          )));
+          ));
       }
       break;
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */ 
+function addanother_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#node']) && $form['#node']->type .'_node_form' == $form_id) {
+    $form['buttons']['submit']['#submit'][] = '_addanother_message';
+  }
+}
+/**
+ * Display the Add Another message if set by addanother_nodeapi().
+ */ 
+function _addanother_message($form, &$form_state) {
+  global $_addanother_message;
+  if (isset($_addanother_message)) {
+    drupal_set_message($_addanother_message, 'status', FALSE);
   }
 }
