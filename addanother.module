@@ -61,6 +61,10 @@ function addanother_admin() {
 function addanother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'insert':
+      if($node->op == t('Save and create another')) {
+        // This prevents AddAnother's message from clashing with Submit Again.
+        return;
+      }
       $allowed_nodetypes = variable_get('addanother_nodetypes', array());
       if (user_access('enable add another') && isset($allowed_nodetypes[$node->type]) && $allowed_nodetypes[$node->type]) {
         global $_addanother_message;
