@@ -1,15 +1,18 @@
 <?php
 // $Id$
+
 /**
  * @file
  * Uninstall and update routines for AddAnother module.
  */
+
 /**
  * Implementation of hook_uninstall().
  */
 function addanother_uninstall() {
   variable_del('addanother_nodetypes');
 }
+
 /**
  * Port over to the new variable storage system.
  */
@@ -26,4 +29,19 @@ function addanother_update_1() {
   }
   variable_set('addanother_nodetypes', $addanother_nodetypes);
   return array();
+}
+
+/**
+ * Update permission name to 'use add another' instead of 'enable add another' to improve usability/consistency.
+ */
+function addanother_update_2() {
+  $ret = array();
+  $result = db_query("SELECT rid, perm FROM {permission} ORDER BY rid");
+  while ($role = db_fetch_object($result)) {
+    $renamed_permission = preg_replace('/enable add another/', 'use add another', $role->perm);
+    if ($renamed_permission != $role->perm) {
+      $ret[] = update_sql("UPDATE {permission} SET perm = '$renamed_permission' WHERE rid = $role->rid");
+    }
+  }
+  return $ret;
 }
