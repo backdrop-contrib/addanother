@@ -1,4 +1,4 @@
 ; $Id$
-name = Add Another
+name = Add another
 description = "Presents users with an option to create another node of the same type after a node is added."
 core = 6.x

@@ -37,27 +37,93 @@ function addanother_perm() {
 function addanother_menu() {
   $items = array();
   $items['admin/settings/addanother'] = array(
-    'title' => 'Add Another',
-    'description' => 'Modify which node types display the Add Another message.',
+    'title' => 'Add another',
+    'description' => 'Modify which node types display the Add another message.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('addanother_admin'),
     'access arguments' => array('administer add another'),
     'type' => MENU_NORMAL_ITEM,
   );
+  $items['node/%/addanother'] = array(
+    'title' => 'Add another',
+    'page callback' => 'addanother_goto',
+    'page arguments' => array(1),
+    'access callback' => 'addanother_access',
+    'access arguments' => array(1),
+    'weight' => 5,
+    'type' => MENU_LOCAL_TASK,
+  );
+
   return $items;
+}
+
+/**
+ * Check if we should display the Add another verbage on a node.
+ */
+function addanother_access($nid) {
+  $allowed_nodetypes = variable_get('addanother_nodetypes', array());
+  $node = node_load($nid);
+
+  if (arg(2) == "edit" && !variable_get('addanother_tab_edit', FALSE)) {
+    return FALSE;
+  }
+
+  if ($node && isset($allowed_nodetypes[$node->type]) && $allowed_nodetypes[$node->type]
+        && user_access('use add another') && node_access('create', $node->type)) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Takes the user to the node creation page for the type of a given node.
+ */
+function addanother_goto($nid) {
+  if ($node = node_load($nid)) {
+    drupal_goto('node/add/'. $node->type);
+  }
+  else {
+    drupal_goto('node/add');
+  }
 }
 
 /**
  * This function sets up the admin/settings/addanother settings page.
  */
 function addanother_admin() {
-  $form['addanother_nodetypes'] = array(
+  $form['addanother_nodes'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Content settings'),
+  );
+  $form['addanother_nodes']['addanother_nodetypes'] = array(
     '#type' => 'checkboxes',
-    '#title' => t('Enable Add Another for these content types'),
+    '#title' => t('Enable Add another for these content types'),
     '#options' => node_get_types('names'),
     '#default_value' => variable_get('addanother_nodetypes', array()),
-    '#description' => 'An <em>Add Another</em> message will be shown after creating these content types',
+    '#description' => 'An <em>Add another</em> message will be shown after creating these content types',
   );
+
+  $form['addanother_display'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Display settings'),
+  );
+  $form['addanother_display']['addanother_message'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display the Add another message after node creation.'),
+    '#default_value' => variable_get('addanother_message', TRUE),
+  );
+  $form['addanother_display']['addanother_tab'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display the Add another tab on supported node types.'),
+    '#default_value' => variable_get('addanother_tab', FALSE),
+  );
+  $form['addanother_display']['addanother_tab_edit'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Also display the Add another tab on supported node edit pages.'),
+    '#default_value' => variable_get('addanother_tab_edit', FALSE),
+  );
+
   return system_settings_form($form);
 }
 
@@ -68,7 +134,7 @@ function addanother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'insert':
       if ($node->op == t('Save and create another')) {
-        // This prevents AddAnother's message from clashing with Submit Again.
+        // This prevents Add another's message from clashing with Submit Again.
         return;
       }
       $allowed_nodetypes = variable_get('addanother_nodetypes', array());
@@ -87,12 +153,14 @@ function addanother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
  * Implementation of hook_form_alter().
  */
 function addanother_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node']) && $form['#node']->type .'_node_form' == $form_id) {
+  if (isset($form['#node']) && $form['#node']->type .'_node_form' == $form_id
+      && variable_get('addanother_message', TRUE)) {
     $form['buttons']['submit']['#submit'][] = '_addanother_message';
   }
 }
+
 /**
- * Display the Add Another message if set by addanother_nodeapi().
+ * Display the Add another message if set by addanother_nodeapi().
  */
 function _addanother_message($form, &$form_state) {
   global $_addanother_message;
