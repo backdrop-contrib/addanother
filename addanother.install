@@ -3,6 +3,12 @@
 
 /**
  * @file
+ * Install, update and uninstall functions for the addanother module.
+ *
+ */
+
+/**
+ * @file
  * Uninstall and update routines for Add another module.
  */
 
@@ -17,15 +23,15 @@ function addanother_uninstall() {
  * Port over to the new variable storage system.
  */
 function addanother_update_1() {
-  $types = node_get_types();
+  $types = node_type_get_types();
   $addanother_nodetypes = array();
   foreach ($types as $type) {
     $typeid = $type->type;
-    $keep = variable_get('addanother_'. $typeid, 0);
+    $keep = variable_get('addanother_' . $typeid, 0);
     if ($keep) {
       $addanother_nodetypes[$typeid] = $typeid;
     }
-    variable_del('addanother_'. $typeid);
+    variable_del('addanother_' . $typeid);
   }
   variable_set('addanother_nodetypes', $addanother_nodetypes);
   return array();
