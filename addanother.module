@@ -8,7 +8,7 @@
  */
 
 /**
- * Implementation of hook_help().
+ * Implement hook_help().
  */
 function addanother_help($path, $arg) {
   $output = '';
@@ -16,36 +16,45 @@ function addanother_help($path, $arg) {
     case "admin/help#addanother":
       $output = '<p>'.  t("Presents users with an option to create another node of the same type after a node is added.") .'</p>';
       return $output;
-    case 'admin/settings/addanother':
-      $output = 'Here you can select the content types for which an <em>"Add another..."</em> message will be displayed. After creating a new content node, users with the <a href="@addanother_perm">use add another</a> permission will receive a message allowing them to add another content node of the same type.';
-      return '<p>'. t($output, array(
-        '@addanother_perm' => url('admin/user/permissions', array('fragment' => 'module-addanother')),
-      )) .'</p>';
+    case 'admin/config/content/addanother':
+      $output = '<p>'. t('Here you can select the content types for which an <em>"Add another..."</em> message will be displayed. After creating a new content node, users with the <a href="@addanother_permission">use add another</a> permission will receive a message allowing them to add another content node of the same type.', array(
+        '@addanother_permission' => url('admin/config/people/permissions', array('fragment' => 'module-addanother')),
+       )) .'</p>';
+      return $output;
   }
 }
 
 /**
- * Implementation of hook_perm().
+ * Implement hook_permission().
  */
-function addanother_perm() {
-  return array('administer add another', 'use add another');
+function addanother_permission() {
+  return array(
+    'administer add another' => array(
+      'title' => t('Administer Add Another'),
+      'description' => t('Configure content types for Add Another'),
+    ),
+    'use add another' => array(
+      'title' => t('Use Add Another'),
+      'description' => t('Use the "Add Another..." link to create more content'),
+    ),
+  );
 }
 
 /**
- * Implementation of hook_menu().
+ * Implement hook_menu().
  */
 function addanother_menu() {
   $items = array();
-  $items['admin/settings/addanother'] = array(
-    'title' => 'Add another',
-    'description' => 'Modify which node types display the Add another message.',
+  $items['admin/config/addanother'] = array(
+    'title' => t('Add another'),
+    'description' => t('Modify which node types display the Add another message.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('addanother_admin'),
     'access arguments' => array('administer add another'),
     'type' => MENU_NORMAL_ITEM,
   );
   $items['node/%/addanother'] = array(
-    'title' => 'Add another',
+    'title' => t('Add another'),
     'page callback' => 'addanother_goto',
     'page arguments' => array(1),
     'access callback' => 'addanother_access',
@@ -99,9 +108,9 @@ function addanother_admin() {
   $form['addanother_nodes']['addanother_nodetypes'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Enable Add another for these content types'),
-    '#options' => node_get_types('names'),
+    '#options' => node_type_get_types('names'),
     '#default_value' => variable_get('addanother_nodetypes', array()),
-    '#description' => 'An <em>Add another</em> message will be shown after creating these content types',
+    '#description' => t('An <em>Add another</em> message will be shown after creating these content types'),
   );
 
   $form['addanother_display'] = array(
@@ -128,39 +137,34 @@ function addanother_admin() {
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Implement hook_nodeapi().
  */
-function addanother_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-  switch ($op) {
-    case 'insert':
-      if ($node->op == t('Save and create another')) {
-        // This prevents Add another's message from clashing with Submit Again.
-        return;
-      }
-      $allowed_nodetypes = variable_get('addanother_nodetypes', array());
-      if (user_access('use add another') && isset($allowed_nodetypes[$node->type]) && $allowed_nodetypes[$node->type]) {
-        global $_addanother_message;
-        $_addanother_message = t('Add another <a href="@typeurl">%type</a>.', array(
-          '@typeurl' => url('node/add/'. str_replace('_', '-', $node->type)),
-          '%type' => node_get_types('name', $node)
-          ));
-      }
-      break;
+function addanother_node_insert(&$node) {
+  if ($node->op == t('Save and create another')) {
+    // This prevents AddAnother's message from clashing with Submit Again.
+    return;
+  }
+  $allowed_nodetypes = variable_get('addanother_nodetypes', array());
+  if (user_access('use add another') && isset($allowed_nodetypes[$node->type]) && $allowed_nodetypes[$node->type]) {
+    global $_addanother_message;
+    $_addanother_message = t('Add another <a href="@typeurl">%type</a>.', array(
+      '@typeurl' => url('node/add/'. str_replace('_', '-', $node->type)),
+      '%type' => node_type_get_name($node)
+      ));
   }
 }
 
 /**
- * Implementation of hook_form_alter().
+ * Implement hook_form_alter().
  */
 function addanother_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node']) && $form['#node']->type .'_node_form' == $form_id
-      && variable_get('addanother_message', TRUE)) {
+  if (!empty($form['#node_edit_form']) && variable_get('addanother_message', TRUE)) {
     $form['buttons']['submit']['#submit'][] = '_addanother_message';
   }
 }
 
 /**
- * Display the Add another message if set by addanother_nodeapi().
+ * Display the Add another message if set by addanother_node_insert().
  */
 function _addanother_message($form, &$form_state) {
   global $_addanother_message;

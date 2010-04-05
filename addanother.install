@@ -3,17 +3,12 @@
 
 /**
  * @file
- * Install, update and uninstall functions for the addanother module.
+ * Install, update and uninstall functions for the Add another module.
  *
  */
 
 /**
- * @file
- * Uninstall and update routines for Add another module.
- */
-
-/**
- * Implementation of hook_uninstall().
+ * Implement hook_uninstall().
  */
 function addanother_uninstall() {
   variable_del('addanother_nodetypes');
