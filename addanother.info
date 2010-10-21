@@ -6,4 +6,3 @@ package = Content
 configure = admin/config/addanother
 files[] = addanother.module
 files[] = addanother.install
-configure = admin/config/addanother
