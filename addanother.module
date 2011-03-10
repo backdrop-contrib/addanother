@@ -110,7 +110,7 @@ function addanother_form_node_type_form_alter(&$form, &$form_state) {
  */
 function addanother_goto($nid) {
   if ($node = node_load($nid)) {
-    drupal_goto('node/add/' . $node->type);
+    drupal_goto('node/add/' . addanother_node_type_url($node->type));
   }
   else {
     drupal_goto('node/add');
@@ -140,11 +140,18 @@ function addanother_form_alter(&$form, $form_state, $form_id) {
 function addanother_node_insert($node) {
   if ($node->op == t('Save and add another')) {
     theme('addanother_button_message', array('nid' => $node->nid));
-    drupal_goto('node/add/' . $node->type);
+    drupal_goto('node/add/' . addanother_node_type_url($node->type));
   }
   elseif (user_access('use add another') && variable_get('addanother_message_' . $node->type, FALSE)) {
     theme('addanother_message_message', array('node' => $node));
   }
+}
+
+ /**
+ * Returns node type string acceptable for URL.
+ */
+function addanother_node_type_url($type) {
+  return str_replace('_', '-', $type);
 }
 
 /**
@@ -171,7 +178,7 @@ function addanother_theme() {
 function theme_addanother_message_message($variables) {
   $node = $variables['node'];
   $addanother_message = t('Add another <a href="@typeurl">%type</a>.', array(
-      '@typeurl' => url('node/add/' . str_replace('_', '-', $node->type)),
+      '@typeurl' => url('node/add/' . addanother_node_type_url($node->type)),
       '%type' => node_type_get_name($node),
       ));
   drupal_set_message($addanother_message);
