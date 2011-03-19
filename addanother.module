@@ -138,6 +138,7 @@ function addanother_form_alter(&$form, $form_state, $form_id) {
  * Implement hook_node_insert().
  */
 function addanother_node_insert($node) {
+  if (!isset($node->op)) return;
   if ($node->op == t('Save and add another')) {
     theme('addanother_button_message', array('nid' => $node->nid));
     drupal_goto('node/add/' . addanother_node_type_url($node->type));
