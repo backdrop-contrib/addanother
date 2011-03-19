@@ -118,6 +118,18 @@ function addanother_goto($nid) {
 }
 
 /**
+ * Implementation of hook_module_implements_alter().
+ */
+function addanother_module_implements_alter(&$implementations, $hook){
+  if ($hook == 'node_insert') {
+    // Ensure we are the last node_insert to fire.
+    $group = $implementations['addanother'];
+    unset($implementations['addanother']);
+    $implementations['addanother'] = $group;
+  }
+}
+
+/**
  * Implementation of hook_form_alter().
  */
 function addanother_form_alter(&$form, $form_state, $form_id) {
