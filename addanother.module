@@ -204,7 +204,11 @@ function theme_addanother_message_message($variables) {
  * Displays a message and link to the added/edited node after submit
  */
 function theme_addanother_button_message($variables) {
-  $nid = $variables['nid'];
-  drupal_set_message(t('You may visit your post at !link', array('!link' => l(url('node/' . $nid), 'node/' . $nid))));
+  $node = node_load($variables['nid']);
+  $t_args = array(
+      '@type' => node_type_get_name($node),
+      '!title' => l(drupal_placeholder($node->title), 'node/' . $node->nid, array('html' => TRUE)),
+  );
+  drupal_set_message(t('@type !title has been created. You may now create another.', $t_args));
   return array();
 }
