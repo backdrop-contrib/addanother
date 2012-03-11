@@ -122,7 +122,7 @@ function addanother_goto($nid) {
  * Implementation of hook_form_alter().
  */
 function addanother_form_alter(&$form, $form_state, $form_id) {
-  if (!empty($form['#node_edit_form'])) {
+  if (!empty($form['#node_edit_form']) && empty($form['nid']['#value'])) {
     $node_type = $form['type']['#value'];
 
     if (user_access('use add another')) {
