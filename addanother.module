@@ -125,18 +125,19 @@ function addanother_form_alter(&$form, $form_state, $form_id) {
   if (!empty($form['#node_edit_form'])) {
     $node_type = $form['type']['#value'];
 
-    if (variable_get('addanother_button_' . $node_type, FALSE)) {
+    if (user_access('use add another')) {
+      if (variable_get('addanother_button_' . $node_type, FALSE)) {
+        $form['actions']['addanother'] = array(
+          '#type' => 'submit',
+          '#value' => t('Save and add another'),
+          '#weight' => -41,
+          '#submit' => array('node_form_submit', 'addanother_node_form_submit')
+        );
+      }
 
-      $form['actions']['addanother'] = array(
-        '#type' => 'submit',
-        '#value' => t('Save and add another'),
-        '#weight' => -41,
-        '#submit' => array('node_form_submit', 'addanother_node_form_submit')
-      );
-    }
-
-    if (user_access('use add another') && variable_get('addanother_message_' . $node_type, FALSE)) {
-      $form['actions']['submit']['#submit'][] = 'addanother_node_form_message_submit';
+      if (variable_get('addanother_message_' . $node_type, FALSE)) {
+        $form['actions']['submit']['#submit'][] = 'addanother_node_form_message_submit';
+      }
     }
   }
 }
