@@ -117,50 +117,73 @@ function addanother_goto($nid) {
   }
 }
 
-/**
- * Implementation of hook_module_implements_alter().
- */
-function addanother_module_implements_alter(&$implementations, $hook){
-  if ($hook == 'node_insert') {
-    // Ensure we are the last node_insert to fire.
-    $group = $implementations['addanother'];
-    unset($implementations['addanother']);
-    $implementations['addanother'] = $group;
-  }
-}
 
 /**
  * Implementation of hook_form_alter().
  */
 function addanother_form_alter(&$form, $form_state, $form_id) {
   if (!empty($form['#node_edit_form'])) {
-    if (variable_get('addanother_button_' . $form['type']['#value'], FALSE)) {
+    $node_type = $form['type']['#value'];
+
+    if (variable_get('addanother_button_' . $node_type, FALSE)) {
 
       $form['actions']['addanother'] = array(
         '#type' => 'submit',
         '#value' => t('Save and add another'),
         '#weight' => -41,
-        '#submit' => array('node_form_submit')
+        '#submit' => array('node_form_submit', 'addanother_node_form_submit')
       );
+    }
+
+    if (user_access('use add another') && variable_get('addanother_message_' . $node_type, FALSE)) {
+      $form['actions']['submit']['#submit'][] = 'addanother_node_form_message_submit';
     }
   }
 }
 
+
 /**
- * Implement hook_node_insert().
+ * Submit handler for the 'Save and add another' button.
+ * This allows a redirect to be set if this was the button pressed.
  */
-function addanother_node_insert($node) {
-  if (!isset($node->op)) return;
-  if ($node->op == t('Save and add another')) {
+function addanother_node_form_submit($form, &$form_state) {
+  // Get the node
+  if ($node = _addanother_get_node_from_form_state($form_state)) {
     theme('addanother_button_message', array('nid' => $node->nid));
-    drupal_goto('node/add/' . addanother_node_type_url($node->type));
+    $form_state['redirect'] = 'node/add/'. addanother_node_type_url($node->type);
   }
-  elseif (user_access('use add another') && variable_get('addanother_message_' . $node->type, FALSE)) {
+}
+
+
+/**
+ * Submit handler if the normal submit button was pressed, however
+ * the node has the 'message' feature enabled.
+ */
+function addanother_node_form_message_submit($form, &$form_state) {
+  // Get the node
+  if ($node = _addanother_get_node_from_form_state($form_state)) {
+    // Display a message
     theme('addanother_message_message', array('node' => $node));
   }
 }
 
- /**
+
+/**
+ * Internal helper function to get the node from a $form_state
+ */
+function _addanother_get_node_from_form_state(&$form_state) {
+  // Check the node is in the form state - if it isn't, something has gone very
+  // wrong... Best not to continue
+  if (!isset($form_state['node'])) {
+    return FALSE;
+  }
+
+  // Return the node
+  return $form_state['node'];
+}
+
+
+/**
  * Returns node type string acceptable for URL.
  */
 function addanother_node_type_url($type) {
