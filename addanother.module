@@ -50,6 +50,17 @@ function addanother_menu() {
 }
 
 /**
+ * Implementation of hook_admin_paths().
+ */
+function addanother_admin_paths() {
+  $paths = array(
+    'node/*/addanother' => TRUE,
+  );
+
+  return $paths;
+}
+
+/**
  * Check if we should display the Add another verbage on a node.
  */
 function addanother_access($nid) {
@@ -192,7 +203,7 @@ function addanother_node_type_url($type) {
 }
 
 /**
- * Impelementation of hook_theme().
+ * Implementation of hook_theme().
  *
  * Concept borrowed from 6.x Submit Again.
  *
@@ -221,8 +232,6 @@ function theme_addanother_message_message($variables) {
   drupal_set_message($addanother_message);
   return array();
 }
-
-
 
 /**
  * Displays a message and link to the added/edited node after submit
