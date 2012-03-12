@@ -34,7 +34,7 @@ function addanother_update_7001() {
   $tab = variable_get('addanother_tab', FALSE);
   $tabedit = variable_get('addanother_tab_edit', FALSE);
   $message = variable_get('addanother_message', FALSE);
-  
+
   foreach ($types as $type) {
     $typeid = $type->type;
     if (!empty($addanother_nodetypes[$typeid])) {
@@ -48,7 +48,7 @@ function addanother_update_7001() {
         variable_set('addanother_tab_edit_' . $typeid, TRUE);
       }
     }
-    
+
   }
   variable_del('addanother_nodetypes');
   variable_del('addanother_tab');

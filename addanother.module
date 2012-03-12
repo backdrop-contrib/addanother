@@ -50,7 +50,7 @@ function addanother_menu() {
 }
 
 /**
- * Implementation of hook_admin_paths().
+ * Implement hook_admin_paths().
  */
 function addanother_admin_paths() {
   $paths = array(
@@ -121,16 +121,15 @@ function addanother_form_node_type_form_alter(&$form, &$form_state) {
  */
 function addanother_goto($nid) {
   if ($node = node_load($nid)) {
-    drupal_goto('node/add/' . addanother_node_type_url($node->type));
+    drupal_goto('node/add/' . _addanother_node_type_url($node->type));
   }
   else {
     drupal_goto('node/add');
   }
 }
 
-
 /**
- * Implementation of hook_form_alter().
+ * Implement hook_form_alter().
  */
 function addanother_form_alter(&$form, $form_state, $form_id) {
   if (!empty($form['#node_edit_form']) && empty($form['nid']['#value'])) {
@@ -153,28 +152,26 @@ function addanother_form_alter(&$form, $form_state, $form_id) {
   }
 }
 
-
 /**
  * Submit handler for the 'Save and add another' button.
  * This allows a redirect to be set if this was the button pressed.
  */
 function addanother_node_form_submit($form, &$form_state) {
-  // Get the node
   if ($node = _addanother_get_node_from_form_state($form_state)) {
+    _addanother_quelch_message($node);
     theme('addanother_button_message', array('nid' => $node->nid));
-    $form_state['redirect'] = 'node/add/'. addanother_node_type_url($node->type);
+
+    $form_state['redirect'] = _addanother_node_add_path($node);
   }
 }
-
 
 /**
  * Submit handler if the normal submit button was pressed, however
  * the node has the 'message' feature enabled.
  */
 function addanother_node_form_message_submit($form, &$form_state) {
-  // Get the node
   if ($node = _addanother_get_node_from_form_state($form_state)) {
-    // Display a message
+    _addanother_quelch_message($node);
     theme('addanother_message_message', array('node' => $node));
   }
 }
@@ -194,16 +191,8 @@ function _addanother_get_node_from_form_state(&$form_state) {
   return $form_state['node'];
 }
 
-
 /**
- * Returns node type string acceptable for URL.
- */
-function addanother_node_type_url($type) {
-  return str_replace('_', '-', $type);
-}
-
-/**
- * Implementation of hook_theme().
+ * Implement hook_theme().
  *
  * Concept borrowed from 6.x Submit Again.
  *
@@ -225,10 +214,13 @@ function addanother_theme() {
  */
 function theme_addanother_message_message($variables) {
   $node = $variables['node'];
-  $addanother_message = t('Add another <a href="@typeurl">%type</a>.', array(
-      '@typeurl' => url('node/add/' . addanother_node_type_url($node->type)),
-      '%type' => node_type_get_name($node),
-      ));
+
+  $t_args = array(
+    '@type' => node_type_get_name($node),
+    '@typeurl' => url(_addanother_node_add_path($node)),
+    '%title' => $node->title,
+  );
+  $addanother_message = t('@type %title has been created. You may <a href="@typeurl">add another @type</a>.', $t_args);
   drupal_set_message($addanother_message);
   return array();
 }
@@ -244,4 +236,43 @@ function theme_addanother_button_message($variables) {
   );
   drupal_set_message(t('@type !title has been created. You may now create another.', $t_args));
   return array();
+}
+
+/**
+ * Remove the default Drupal node creation message.
+ */
+function _addanother_quelch_message($node) {
+  if (!isset($_SESSION['messages']['status'])) return 0;
+
+  $t_args = array(
+    '@type' => node_type_get_name($node),
+    '%title' => $node->title,
+  );
+  $remove[] = t('@type %title has been created.', $t_args);
+
+  if ($messages = array_diff($_SESSION['messages']['status'], $remove)) {
+    $_SESSION['messages']['status'] = $messages;
+  }
+  else {
+    $_SESSION['messages']['status'] = array();
+  }
+}
+
+/**
+ * Returns node type string acceptable for URL.
+ */
+function _addanother_node_type_url($type) {
+  return str_replace('_', '-', $type);
+}
+
+/**
+ * Return the best possible path to provide to the user to create another node.
+ */
+function _addanother_node_add_path($node) {
+  $path = 'node/add/' . _addanother_node_type_url($node->type);
+  // If we are coming from a node creation path, re-use the path to save additional variables.
+  if (arg(0) == "node" && arg(1) == "add") {
+    $path = $_GET['q'];
+  }
+  return $path;
 }
