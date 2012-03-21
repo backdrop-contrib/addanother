@@ -36,7 +36,7 @@ function addanother_permission() {
  */
 function addanother_menu() {
   $items = array();
-  $items['node/%/addanother'] = array(
+  $items['node/%node/addanother'] = array(
     'title' => 'Add another',
     'page callback' => 'addanother_goto',
     'page arguments' => array(1),
@@ -47,6 +47,13 @@ function addanother_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Takes the user to the node creation page for the type of a given node.
+ */
+function addanother_goto($node) {
+  drupal_goto('node/add/' . _addanother_node_type_url($node->type));
 }
 
 /**
@@ -63,15 +70,15 @@ function addanother_admin_paths() {
 /**
  * Check if we should display the Add another verbage on a node.
  */
-function addanother_access($nid) {
-  $node = node_load($nid);
-
-  if (arg(2) == "edit" && !variable_get('addanother_tab_edit_' . $node->type, FALSE)) {
+function addanother_access($node) {
+  if (!node_access('create', $node->type)) return FALSE;
+  if (arg(2) == "edit" &&
+      !variable_get('addanother_tab_edit_' . $node->type, FALSE)) {
     return FALSE;
   }
 
   if ($node && variable_get('addanother_tab_' . $node->type, FALSE)
-      && user_access('use add another') && node_access('create', $node->type)) {
+      && user_access('use add another')) {
     return TRUE;
   }
 
@@ -113,18 +120,6 @@ function addanother_form_node_type_form_alter(&$form, &$form_state) {
       '#default_value' => variable_get('addanother_tab_edit_' . $form['#node_type']->type, FALSE),
       '#description' => t('Enable this checkbox if you want to also show a "Add another" tab on node edit pages of this type. Tis option does nothing if the Add Another tab is disabled.'),
     );
-  }
-}
-
-/**
- * Takes the user to the node creation page for the type of a given node.
- */
-function addanother_goto($nid) {
-  if ($node = node_load($nid)) {
-    drupal_goto('node/add/' . _addanother_node_type_url($node->type));
-  }
-  else {
-    drupal_goto('node/add');
   }
 }
 
