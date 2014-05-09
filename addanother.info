@@ -5,3 +5,5 @@ package = User interface
 files[] = addanother.module
 files[] = addanother.install
 files[] = addanother.test
+configure = admin/structure/types/addanother
+
