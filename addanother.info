@@ -1,9 +1,6 @@
 name = "Add another"
 description = "Presents users with an option to create another node of the same type after a node is added."
-core = 7.x
+backdrop = 1.x
 package = User interface
-files[] = addanother.module
-files[] = addanother.install
-files[] = addanother.test
 configure = admin/structure/types/addanother
 

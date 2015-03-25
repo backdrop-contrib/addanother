@@ -1,0 +1,5 @@
+[AddanotherTestCase]
+name = 'Add another'
+description = 'Ensure that the Add another functionality works correctly'
+group = 'Add another'
+file=addanother.test

@@ -5,16 +5,8 @@
  * Unit tests for Add another module.
  */
 
-class AddanotherTestCase extends DrupalWebTestCase {
+class AddanotherTestCase extends BackdropWebTestCase {
   protected $privileged_user;
-
-  public static function getInfo() {
-    return array(
-      'name' => 'Add another',
-      'description' => 'Ensure that the Add another functionality works correctly.',
-      'group' => 'Add another',
-    );
-  }
 
   public function setUp() {
     parent::setUp('addanother');
@@ -30,20 +22,23 @@ class AddanotherTestCase extends DrupalWebTestCase {
       'type' => $nodetype,
       'name' => $nodetype,
     );
-    $type = $this->drupalCreateContentType($settings);
+    $type = $this->backdropCreateContentType($settings);
+    $config = config('addanother.' . $nodetype);
+    $config->set('button', TRUE);
+    $config->set('message', TRUE);
+    $config->set('tab', TRUE);
+    $config->set('tab_edit', TRUE);
+    $config->save();
 
-    $type_exists = db_query('SELECT 1 FROM {node_type} WHERE type = :type', array(':type' => $type->type))->fetchField();
-    $this->assertTrue($type_exists, 'The new content type has been created in the database.');
-
-    $web_user = $this->drupalCreateUser(array('bypass node access', 'administer content types', 'use add another', 'administer add another'));
-    $this->drupalLogin($web_user);
+    $web_user = $this->backdropCreateUser(array('bypass node access', 'administer content types', 'use add another', 'administer add another'));
+    $this->backdropLogin($web_user);
 
     // Create a node.
     $edit = array();
     $langcode = LANGUAGE_NONE;
     $edit["title"] = $this->randomName(8);
     $edit["body[$langcode][0][value]"] = $this->randomName(16);
-    $this->drupalPost("node/add/$nodetype", $edit, t('Save'));
+    $this->backdropPost("node/add/$nodetype", $edit, t('Save'));
 
     // Check that the node has been created
     $this->assertRaw(t('!post %title has been created.', array('!post' => $nodetype, '%title' => $edit["title"])), t('Node created.'));
@@ -55,7 +50,7 @@ class AddanotherTestCase extends DrupalWebTestCase {
     $langcode = LANGUAGE_NONE;
     $edit["title"] = $this->randomName(8);
     $edit["body[$langcode][0][value]"] = $this->randomName(16);
-    $this->drupalPost("node/add/$nodetype", $edit, t('Save and add another'));
+    $this->backdropPost("node/add/$nodetype", $edit, t('Save and add another'));
 
     // Check that the node has been created
     $this->assertUrl("node/add/$nodetype");
