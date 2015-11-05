@@ -2,5 +2,6 @@ name = "Add another"
 description = "Presents users with an option to create another node of the same type after a node is added."
 backdrop = 1.x
 type = module
+version = 1.x-1.0.1
 package = User interface
 configure = admin/structure/types/addanother
